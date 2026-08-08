@@ -1,6 +1,8 @@
 # BioScan AI - Facial Recognition Dashboard
 
-BioScan AI is a modern, real-time facial recognition web application. It combines browser-side GPU-accelerated face tracking and landmark modeling with a lightweight Flask backend and a local SQLite database to store user face templates, session logs, and face crop snapshots.
+**Live Demo**: [https://facial-recognition-app-tr4c.onrender.com](https://facial-recognition-app-tr4c.onrender.com)
+
+BioScan AI is a modern, real-time facial recognition web application. It combines browser-side GPU-accelerated face tracking and landmark modeling with a lightweight Flask backend and a database to store user face templates, session logs, and face crop snapshots.
 
 ---
 
@@ -91,9 +93,18 @@ Because of the hybrid structure, the recommended way to host this on Render is a
 5. Choose the **Free** instance type (or any other tier) and click **Deploy Web Service**.
 6. Render will build the image, run `setup_models.py` inside the container build environment to download the models, and deploy the application.
 
-### Important: SQLite Database Persistence
-Render's local file-system is **ephemeral** (gets wiped out and reset on redeployments or when the instance spins down due to inactivity on the free tier). 
-- **To make your database and snapshots persistent**: Mount a **Persistent Disk** on Render (available starting at $5/month) with the following configurations in your Render dashboard:
-  - **Mount Path**: `/app/instance` (persists SQLite database)
-  - **Mount Path**: `/app/static/snapshots` (persists timeline pictures)
-- If you use the Free tier without a Persistent Disk, the database will work fine but will reset to empty whenever the service restarts.
+### Database Persistence Options on Render
+
+Render's local file-system is **ephemeral** (gets wiped out and reset on redeployments or when the instance spins down due to inactivity on the free tier). You have two options to keep your database safe:
+
+#### Option A: External Cloud PostgreSQL (100% Free)
+You can connect a free PostgreSQL database (such as **Render PostgreSQL**, **Neon.tech**, or **Supabase**) to this application.
+1. Create your PostgreSQL database and copy its **Internal Connection URL**.
+2. In your Render Web Service dashboard, go to **Environment** and click **Add Environment Variable**.
+3. Add **`DATABASE_URL`** as the key and paste your PostgreSQL connection string as the value.
+4. Save changes. The Flask app will automatically detect it, install the necessary drivers (`psycopg2-binary`), and switch from SQLite to your persistent cloud PostgreSQL database.
+
+#### Option B: SQLite Persistent Disk (Paid, ~$5/month)
+If you wish to stick with the local SQLite file-system database but make it permanent, you can attach a **Persistent Disk** in your Render dashboard under the **Disks** tab:
+- **Mount Path**: `/app/instance` (persists SQLite database file)
+- **Mount Path**: `/app/static/snapshots` (persists captured face snapshots)
