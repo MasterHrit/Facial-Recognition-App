@@ -1,0 +1,27 @@
+# Python virtual environment
+venv/
+.venv/
+ENV/
+
+# Python cache / bytecode
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Local SQLite database (privacy/data isolation)
+instance/
+
+# Local captured webcam snapshots (privacy/data isolation)
+static/snapshots/
+
+# Downloaded face-api.js models (weights are auto-downloaded on build/setup)
+static/models/
+
+# Environment configurations
+.env
+
+# OS specific files
+.DS_Store
+Thumbs.db
+*.db

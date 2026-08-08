@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BioScan AI - Facial Recognition Dashboard</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <!-- Load face-api.js from CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/dist/face-api.min.js" defer></script>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <header class="glass">
+            <div class="logo-section">
+                <h1>BioScan AI <span>v1.0</span></h1>
+            </div>
+            <div class="status-badge">
+                <div id="system-status-dot" class="status-dot loading"></div>
+                <span id="system-status-text">Initializing Models...</span>
+            </div>
+        </header>
+
+        <!-- Stats Grid -->
+        <div class="stats-grid">
+            <div class="stat-card glass">
+                <span class="stat-label">Webcam Status</span>
+                <span class="stat-value" id="stat-webcam">Offline</span>
+            </div>
+            <div class="stat-card glass">
+                <span class="stat-label">Registered Profiles</span>
+                <span class="stat-value" id="stat-registered-count">0</span>
+            </div>
+            <div class="stat-card glass">
+                <span class="stat-label">Detections Today</span>
+                <span class="stat-value" id="stat-detections-count">0</span>
+            </div>
+            <div class="stat-card glass">
+                <span class="stat-label">Last Recognized</span>
+                <span class="stat-value" id="stat-last-match" style="font-size: 1.3rem; margin-top: 0.35rem;">None</span>
+            </div>
+        </div>
+
+        <!-- Dashboard Grid -->
+        <div class="dashboard-grid">
+            <!-- Left Pane: Camera viewport -->
+            <div class="camera-card glass scanning" id="camera-card-container">
+                <div class="panel-header">
+                    <h2>Live Scanner Feed</h2>
+                    <div style="display: flex; gap: 0.5rem;">
+                        <button id="btn-pause-camera" class="secondary-btn" style="padding: 0.4rem 0.8rem; font-size: 0.8rem;" disabled>
+                            <i class="fa-solid fa-pause"></i> Pause
+                        </button>
+                    </div>
+                </div>
+                <div class="viewport-container">
+                    <video id="webcam" autoplay muted playsinline></video>
+                    <canvas id="overlay-canvas"></canvas>
+                    <div class="scanner-overlay">
+                        <div class="scan-line"></div>
+                    </div>
+                    <div id="camera-fallback" class="fallback-message">
+                        <i class="fa-solid fa-circle-notch fa-spin"></i>
+                        <p id="fallback-text">Loading face-api.js weights...</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Pane: Control Panel & Database -->
+            <div style="display: flex; flex-direction: column; gap: 1.5rem;">
+                <!-- Register Face Card -->
+                <div class="controls-card glass">
+                    <div style="border-bottom: 1px solid var(--border-color); padding-bottom: 0.75rem;">
+                        <h2 style="font-family: var(--font-heading); font-size: 1.3rem; font-weight: 700;">Profile Registration</h2>
+                    </div>
+                    
+                    <div class="input-group">
+                        <label for="reg-name">Full Name</label>
+                        <div class="input-with-button">
+                            <input type="text" id="reg-name" placeholder="Enter person's name..." disabled>
+                            <button id="btn-register" disabled>
+                                <i class="fa-solid fa-user-plus"></i> Register
+                            </button>
+                        </div>
+                    </div>
+                    <p style="font-size: 0.75rem; color: var(--text-secondary); line-height: 1.4;">
+                        <i class="fa-solid fa-circle-info" style="color: var(--primary);"></i> 
+                        For best results, align your face in the center of the frame and keep neutral expression. You can register multiple faces under the same name.
+                    </p>
+                </div>
+
+                <!-- Database Card -->
+                <div class="controls-card glass" style="flex: 1;">
+                    <div style="border-bottom: 1px solid var(--border-color); padding-bottom: 0.75rem; display: flex; justify-content: space-between; align-items: center;">
+                        <h2 style="font-family: var(--font-heading); font-size: 1.3rem; font-weight: 700;">Database Profiles</h2>
+                        <span id="db-profile-badge" style="font-size: 0.75rem; background: var(--border-color); padding: 0.25rem 0.5rem; border-radius: 4px;">0 Total</span>
+                    </div>
+
+                    <div class="user-list-container">
+                        <table class="user-table">
+                            <thead>
+                                <tr>
+                                    <th>Name</th>
+                                    <th style="width: 80px; text-align: center;">Templates</th>
+                                    <th style="width: 50px;"></th>
+                                </tr>
+                            </thead>
+                            <tbody id="user-table-body">
+                                <tr>
+                                    <td colspan="3" style="text-align: center; color: var(--text-secondary); padding: 2rem 0;">
+                                        Loading database...
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Timeline Log Section -->
+        <div class="logs-panel glass">
+            <div class="panel-header">
+                <h2>Activity Timeline Log</h2>
+                <button id="btn-clear-logs" class="danger-btn" style="padding: 0.4rem 0.8rem; font-size: 0.8rem;">
+                    <i class="fa-solid fa-trash-can"></i> Clear Log
+                </button>
+            </div>
+            <div class="logs-timeline-container">
+                <div id="logs-list" class="timeline">
+                    <!-- Logs populated via JavaScript -->
+                    <div class="empty-logs">
+                        <i class="fa-solid fa-fingerprint" style="font-size: 2rem; color: var(--text-secondary); margin-bottom: 0.5rem; display: block;"></i>
+                        No recognition activity recorded yet.
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Frontend logic script -->
+    <script src="{{ url_for('static', filename='js/app.js') }}" defer></script>
+</body>
+</html>
