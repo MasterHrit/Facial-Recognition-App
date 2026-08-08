@@ -8,8 +8,16 @@ import numpy as np
 
 app = Flask(__name__)
 
-# Configure local SQLite database inside the Flask instance folder
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///faces.db'
+# Configure database dynamically: Use cloud PostgreSQL if DATABASE_URL is set, otherwise fall back to local SQLite
+database_url = os.environ.get('DATABASE_URL')
+if database_url:
+    # SQLAlchemy requires 'postgresql://' but platforms like Render/Heroku often output 'postgres://'
+    if database_url.startswith("postgres://"):
+        database_url = database_url.replace("postgres://", "postgresql://", 1)
+    app.config['SQLALCHEMY_DATABASE_URI'] = database_url
+else:
+    app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///faces.db'
+
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['SECRET_KEY'] = 'dev-secret-key-face-rec'
 
